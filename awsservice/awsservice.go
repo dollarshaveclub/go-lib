@@ -4,35 +4,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
 var awsRegion = "us-west-2"
-
-type ELBListener struct {
-	InstancePort         int64
-	LoadBalancerPort     int64
-	LoadBalancerProtocol string
-	InstanceProtocol     string
-	CertificateID        string
-}
-
-type LoadBalancerDefinition struct {
-	Listeners      []ELBListener
-	Name           string
-	SecurityGroups []string
-	Scheme         string
-	Subnets        []string
-}
-
-type Route53RecordDefinition struct {
-	ZoneID string
-	Name   string
-	Value  string
-	Type   string
-	TTL    int64
-}
 
 type AWSLoadBalancerService interface {
 	CreateLoadBalancer(*LoadBalancerDefinition) (string, error)
@@ -46,9 +23,19 @@ type AWSRoute53Service interface {
 	DeleteDNSRecord(*Route53RecordDefinition) error
 }
 
+type AWSEC2Service interface {
+	RunInstances(*InstancesDefinition) ([]string, error)
+	StartInstances([]string) error
+	StopInstances([]string) error
+	FindInstancesByTag(string, string) ([]string, error)
+	TagInstances([]string, string, string) error
+	DeleteTag([]string, string) error
+}
+
 type AWSService interface {
 	AWSLoadBalancerService
 	AWSRoute53Service
+	AWSEC2Service
 }
 
 type LimitedRoute53API interface {
@@ -65,6 +52,7 @@ type LimitedELBAPI interface {
 type RealAWSService struct {
 	elbc *elb.ELB
 	r53c *route53.Route53
+	ec2  *ec2.EC2
 }
 
 // Testing types
@@ -84,6 +72,7 @@ func NewStaticAWSService(id string, secret string) AWSService {
 	return &RealAWSService{
 		elbc: elb.New(s),
 		r53c: route53.New(s),
+		ec2:  ec2.New(s),
 	}
 }
 
@@ -94,6 +83,7 @@ func NewAWSService() AWSService {
 	return &RealAWSService{
 		elbc: elb.New(s),
 		r53c: route53.New(s),
+		ec2:  ec2.New(s),
 	}
 }
 

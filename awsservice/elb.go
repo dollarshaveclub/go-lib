@@ -6,6 +6,22 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 )
 
+type ELBListener struct {
+	InstancePort         int64
+	LoadBalancerPort     int64
+	LoadBalancerProtocol string
+	InstanceProtocol     string
+	CertificateID        string
+}
+
+type LoadBalancerDefinition struct {
+	Listeners      []ELBListener
+	Name           string
+	SecurityGroups []string
+	Scheme         string
+	Subnets        []string
+}
+
 func (aws *RealAWSService) CreateLoadBalancer(lbd *LoadBalancerDefinition) (string, error) {
 	listeners := []*elb.Listener{}
 	for _, l := range lbd.Listeners {

@@ -4,6 +4,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
+type Route53RecordDefinition struct {
+	ZoneID string
+	Name   string
+	Value  string
+	Type   string
+	TTL    int64
+}
+
 func (aws *RealAWSService) executeR53Action(a string, rd *Route53RecordDefinition) error {
 	param := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
