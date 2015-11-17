@@ -2,13 +2,18 @@ package vaultclient
 
 import (
 	"log"
+	"os"
 	"testing"
 )
 
+const (
+	testSecretPath = "secret/testing/test_value"
+)
+
 var tconfig = VaultConfig{
-	Server:     "https://vault-prod.shave.io:8200",
-	AppID:      "acquisition-development",
-	UserIDPath: "testdata/userid.txt",
+	Server:     os.Getenv("VAULT_ADDR"),
+	AppID:      os.Getenv("VAULT_APP_ID"),
+	UserIDPath: os.Getenv("VAULT_USER_ID_PATH"),
 }
 
 func TestVaultAppIDAuth(t *testing.T) {
@@ -31,7 +36,7 @@ func TestVaultGetValue(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Error authenticating: %v", err)
 	}
-	d, err := vc.GetValue("secret/development/acquisition/test_value")
+	d, err := vc.GetValue(testSecretPath)
 	if err != nil {
 		log.Fatalf("Error getting value: %v", err)
 	}
