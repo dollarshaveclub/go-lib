@@ -11,19 +11,19 @@ import (
 
 // CTable is a Cassandra table definition
 type CTable struct {
-	Name      string
-	ColumnDef []string
+	Name    string
+	Columns []string
 }
 
 // UDT is a user-defined type
 type UDT struct {
-	Name      string
-	ColumnDef []string
+	Name    string
+	Columns []string
 }
 
 // CreateTable creates a table
 func CreateTable(c *gocql.ClusterConfig, t CTable) error {
-	qs := fmt.Sprintf("CREATE TABLE IF NOT EXISTS%v ( %v );", t.Name, strings.Join(t.ColumnDef, ", "))
+	qs := fmt.Sprintf("CREATE TABLE IF NOT EXISTS%v ( %v );", t.Name, strings.Join(t.Columns, ", "))
 	s, err := c.CreateSession()
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func CreateTable(c *gocql.ClusterConfig, t CTable) error {
 
 // CreateUDT creates a user-defined type
 func CreateUDT(c *gocql.ClusterConfig, u UDT) error {
-	qs := fmt.Sprintf("CREATE TYPE IF NOT EXISTS %v ( %v );", u.Name, strings.Join(u.ColumnDef, ", "))
+	qs := fmt.Sprintf("CREATE TYPE IF NOT EXISTS %v ( %v );", u.Name, strings.Join(u.Columns, ", "))
 	s, err := c.CreateSession()
 	if err != nil {
 		return err
