@@ -3,6 +3,7 @@ package cassandra
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/dollarshaveclub/go-lib/set"
 	"github.com/gocql/gocql"
@@ -22,7 +23,7 @@ type UDT struct {
 
 // CreateTable creates a table
 func CreateTable(c *gocql.ClusterConfig, t CTable) error {
-	qs := fmt.Sprintf("CREATE TABLE IF NOT EXISTS%v ( %v );", t.Name, t.ColumnDef)
+	qs := fmt.Sprintf("CREATE TABLE IF NOT EXISTS%v ( %v );", t.Name, strings.Join(t.ColumnDef, ", "))
 	s, err := c.CreateSession()
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func CreateTable(c *gocql.ClusterConfig, t CTable) error {
 
 // CreateUDT creates a user-defined type
 func CreateUDT(c *gocql.ClusterConfig, u UDT) error {
-	qs := fmt.Sprintf("CREATE TYPE IF NOT EXISTS %v ( %v );", u.Name, u.ColumnDef)
+	qs := fmt.Sprintf("CREATE TYPE IF NOT EXISTS %v ( %v );", u.Name, strings.Join(u.ColumnDef, ", "))
 	s, err := c.CreateSession()
 	if err != nil {
 		return err
