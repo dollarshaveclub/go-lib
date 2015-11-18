@@ -85,8 +85,11 @@ func CreateRequiredTables(c *gocql.ClusterConfig, rt []CTable) error {
 	return nil
 }
 
-// CreateKeyspace creates a keyspace if nessary
-func CreateKeyspace(c *gocql.ClusterConfig, ks string, rf string) error {
+// CreateKeyspace creates a keyspace if necessary
+// ks -> keyspace name
+// rs -> replication strategy class
+// rf -> replication factor
+func CreateKeyspace(c *gocql.ClusterConfig, ks string, rs string, rf int) error {
 	kis, err := GetKeyspaces(c)
 	if err != nil {
 		return err
@@ -100,7 +103,10 @@ func CreateKeyspace(c *gocql.ClusterConfig, ks string, rf string) error {
 			return err
 		}
 		defer s.Close()
-		err = s.Query(fmt.Sprintf("CREATE KEYSPACE IF NOT EXISTS %v WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': %v};", ks, rf)).Exec()
+		if rs == "" {
+			rs = "SimpleStrategy"
+		}
+		err = s.Query(fmt.Sprintf("CREATE KEYSPACE IF NOT EXISTS %v WITH REPLICATION = {'class': '%v', 'replication_factor': %v};", ks, rs, rf)).Exec()
 		if err != nil {
 			return err
 		}
