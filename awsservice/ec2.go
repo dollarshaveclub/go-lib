@@ -19,7 +19,17 @@ type InstancesDefinition struct {
 	Type          string
 	UserData      []byte
 	Count         int
-	RootSizeGB    int
+	RootSizeGB    int // Optional (default: 20)
+}
+
+type SubnetDefinition struct {
+	AvailabilityZone     string
+	AvailableIPAddresses int64
+	CIDR                 string
+	State                string
+	ID                   string
+	Tags                 map[string]string
+	VPC                  string
 }
 
 func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, error) {
@@ -123,4 +133,27 @@ func (aws *RealAWSService) DeleteTag(ids []string, n string) error {
 	}
 	_, err := aws.ec2.DeleteTags(&dti)
 	return err
+}
+
+func (aws *RealAWSService) GetSubnetInfo(id string) (*SubnetDefinition, error) {
+	result := &SubnetDefinition{}
+	dsi := ec2.DescribeSubnetsInput{
+		SubnetIds: stringSlicetoStringPointerSlice([]string{id}),
+	}
+	res, err := aws.ec2.DescribeSubnets(&dsi)
+	if err != nil {
+		return result, err
+	}
+	result.AvailabilityZone = *res.Subnets[0].AvailabilityZone
+	result.AvailableIPAddresses = *res.Subnets[0].AvailableIpAddressCount
+	result.CIDR = *res.Subnets[0].CidrBlock
+	result.State = *res.Subnets[0].State
+	result.ID = *res.Subnets[0].SubnetId
+	result.VPC = *res.Subnets[0].VpcId
+	tags := map[string]string{}
+	for _, t := range res.Subnets[0].Tags {
+		tags[*t.Key] = *t.Value
+	}
+	result.Tags = tags
+	return result, nil
 }
