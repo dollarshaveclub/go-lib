@@ -30,6 +30,7 @@ type AWSEC2Service interface {
 	FindInstancesByTag(string, string) ([]string, error)
 	TagInstances([]string, string, string) error
 	DeleteTag([]string, string) error
+	GetSubnetInfo(string) (*SubnetDefinition, error)
 }
 
 type AWSService interface {
