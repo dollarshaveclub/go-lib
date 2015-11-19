@@ -23,6 +23,9 @@ type InstancesDefinition struct {
 }
 
 type InstanceInfo struct {
+	AMI            string
+	Keypair        string
+	Type           string
 	ID             string
 	PrivateIP      string
 	Subnet         string
@@ -53,7 +56,6 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 		DeviceName: &rdn,
 		Ebs: &ec2.EbsBlockDevice{
 			DeleteOnTermination: &True,
-			Encrypted:           &False,
 			VolumeSize:          &rs,
 			VolumeType:          &vt,
 		},
@@ -178,6 +180,9 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 	for _, r := range res.Reservations {
 		for _, i := range r.Instances {
 			ii := InstanceInfo{
+				AMI:       *i.ImageId,
+				Keypair:   *i.KeyName,
+				Type:      *i.InstanceType,
 				ID:        *i.InstanceId,
 				PrivateIP: *i.PrivateIpAddress,
 				Subnet:    *i.SubnetId,
