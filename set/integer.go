@@ -6,7 +6,7 @@ type IntegerSet struct {
 	Set map[int]bool
 }
 
-func (s *IntegerSet) Items() []int {
+func (s IntegerSet) Items() []int {
 	items := []int{}
 	for k := range s.Set {
 		items = append(items, k)
@@ -22,12 +22,12 @@ func (s *IntegerSet) Remove(k int) {
 	delete(s.Set, k)
 }
 
-func (s *IntegerSet) Contains(k int) bool {
+func (s IntegerSet) Contains(k int) bool {
 	_, ok := s.Set[k]
 	return ok
 }
 
-func (s *IntegerSet) IsEqual(other IntegerSet) bool {
+func (s IntegerSet) IsEqual(other IntegerSet) bool {
 	for val := range s.Set {
 		if !other.Contains(val) {
 			return false
@@ -36,7 +36,7 @@ func (s *IntegerSet) IsEqual(other IntegerSet) bool {
 	return true
 }
 
-func (s *IntegerSet) IsSubset(other IntegerSet) bool {
+func (s IntegerSet) IsSubset(other IntegerSet) bool {
 	for val := range s.Set {
 		if !other.Contains(val) {
 			return false
@@ -45,11 +45,11 @@ func (s *IntegerSet) IsSubset(other IntegerSet) bool {
 	return true
 }
 
-func (s *IntegerSet) IsSuperset(other IntegerSet) bool {
-	return other.IsSubset(*s)
+func (s IntegerSet) IsSuperset(other IntegerSet) bool {
+	return other.IsSubset(s)
 }
 
-func (s *IntegerSet) Intersection(other IntegerSet) IntegerSet {
+func (s IntegerSet) Intersection(other IntegerSet) IntegerSet {
 	intersection := NewIntegerSet([]int{})
 	if len(other.Set) > len(s.Set) {
 		for val := range s.Set {
@@ -67,7 +67,7 @@ func (s *IntegerSet) Intersection(other IntegerSet) IntegerSet {
 	return intersection
 }
 
-func (s *IntegerSet) Difference(other IntegerSet) IntegerSet {
+func (s IntegerSet) Difference(other IntegerSet) IntegerSet {
 	diff := NewIntegerSet([]int{})
 	for val := range s.Set {
 		if !other.Contains(val) {
@@ -77,13 +77,13 @@ func (s *IntegerSet) Difference(other IntegerSet) IntegerSet {
 	return diff
 }
 
-func (s *IntegerSet) SymmetricDifference(other IntegerSet) IntegerSet {
+func (s IntegerSet) SymmetricDifference(other IntegerSet) IntegerSet {
 	diffA := s.Difference(other)
-	diffB := other.Difference(*s)
+	diffB := other.Difference(s)
 	return diffA.Union(diffB)
 }
 
-func (s *IntegerSet) Union(other IntegerSet) IntegerSet {
+func (s IntegerSet) Union(other IntegerSet) IntegerSet {
 	union := NewIntegerSet([]int{})
 	for val := range s.Set {
 		union.Add(val)

@@ -6,7 +6,7 @@ type StringSet struct {
 	Set map[string]bool
 }
 
-func (s *StringSet) Items() []string {
+func (s StringSet) Items() []string {
 	items := []string{}
 	for k := range s.Set {
 		items = append(items, k)
@@ -22,12 +22,12 @@ func (s *StringSet) Remove(k string) {
 	delete(s.Set, k)
 }
 
-func (s *StringSet) Contains(k string) bool {
+func (s StringSet) Contains(k string) bool {
 	_, ok := s.Set[k]
 	return ok
 }
 
-func (s *StringSet) IsEqual(other StringSet) bool {
+func (s StringSet) IsEqual(other StringSet) bool {
 	for val := range s.Set {
 		if !other.Contains(val) {
 			return false
@@ -36,7 +36,7 @@ func (s *StringSet) IsEqual(other StringSet) bool {
 	return true
 }
 
-func (s *StringSet) IsSubset(other StringSet) bool {
+func (s StringSet) IsSubset(other StringSet) bool {
 	for val := range s.Set {
 		if !other.Contains(val) {
 			return false
@@ -45,11 +45,11 @@ func (s *StringSet) IsSubset(other StringSet) bool {
 	return true
 }
 
-func (s *StringSet) IsSuperset(other StringSet) bool {
-	return other.IsSubset(*s)
+func (s StringSet) IsSuperset(other StringSet) bool {
+	return other.IsSubset(s)
 }
 
-func (s *StringSet) Intersection(other StringSet) StringSet {
+func (s StringSet) Intersection(other StringSet) StringSet {
 	intersection := NewStringSet([]string{})
 	if len(other.Set) > len(s.Set) {
 		for val := range s.Set {
@@ -67,7 +67,7 @@ func (s *StringSet) Intersection(other StringSet) StringSet {
 	return intersection
 }
 
-func (s *StringSet) Difference(other StringSet) StringSet {
+func (s StringSet) Difference(other StringSet) StringSet {
 	diff := NewStringSet([]string{})
 	for val := range s.Set {
 		if !other.Contains(val) {
@@ -77,13 +77,13 @@ func (s *StringSet) Difference(other StringSet) StringSet {
 	return diff
 }
 
-func (s *StringSet) SymmetricDifference(other StringSet) StringSet {
+func (s StringSet) SymmetricDifference(other StringSet) StringSet {
 	diffA := s.Difference(other)
-	diffB := other.Difference(*s)
+	diffB := other.Difference(s)
 	return diffA.Union(diffB)
 }
 
-func (s *StringSet) Union(other StringSet) StringSet {
+func (s StringSet) Union(other StringSet) StringSet {
 	union := NewStringSet([]string{})
 	for val := range s.Set {
 		union.Add(val)
