@@ -28,6 +28,7 @@ type InstanceInfo struct {
 	Type           string
 	ID             string
 	PrivateIP      string
+	PublicIP       string
 	Subnet         string
 	SecurityGroups []string
 	Tags           map[string]string
@@ -184,6 +185,7 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 				Keypair:   *i.KeyName,
 				Type:      *i.InstanceType,
 				ID:        *i.InstanceId,
+				PublicIP:  *i.PublicIpAddress,
 				PrivateIP: *i.PrivateIpAddress,
 				Subnet:    *i.SubnetId,
 			}
