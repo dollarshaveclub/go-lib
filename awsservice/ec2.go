@@ -22,7 +22,15 @@ type InstancesDefinition struct {
 	RootSizeGB    int // Optional (default: 20)
 }
 
-type SubnetDefinition struct {
+type InstanceInfo struct {
+	ID             string
+	PrivateIP      string
+	Subnet         string
+	SecurityGroups []string
+	Tags           map[string]string
+}
+
+type SubnetInfo struct {
 	AvailabilityZone     string
 	AvailableIPAddresses int64
 	CIDR                 string
@@ -135,8 +143,8 @@ func (aws *RealAWSService) DeleteTag(ids []string, n string) error {
 	return err
 }
 
-func (aws *RealAWSService) GetSubnetInfo(id string) (*SubnetDefinition, error) {
-	result := &SubnetDefinition{}
+func (aws *RealAWSService) GetSubnetInfo(id string) (*SubnetInfo, error) {
+	result := &SubnetInfo{}
 	dsi := ec2.DescribeSubnetsInput{
 		SubnetIds: stringSlicetoStringPointerSlice([]string{id}),
 	}
@@ -155,5 +163,37 @@ func (aws *RealAWSService) GetSubnetInfo(id string) (*SubnetDefinition, error) {
 		tags[*t.Key] = *t.Value
 	}
 	result.Tags = tags
+	return result, nil
+}
+
+func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error) {
+	result := []InstanceInfo{}
+	dii := ec2.DescribeInstancesInput{
+		InstanceIds: stringSlicetoStringPointerSlice(ids),
+	}
+	res, err := aws.ec2.DescribeInstances(&dii)
+	if err != nil {
+		return result, err
+	}
+	for _, r := range res.Reservations {
+		for _, i := range r.Instances {
+			ii := InstanceInfo{
+				ID:        *i.InstanceId,
+				PrivateIP: *i.PrivateIpAddress,
+				Subnet:    *i.SubnetId,
+			}
+			sgl := []string{}
+			for _, sg := range i.SecurityGroups {
+				sgl = append(sgl, *sg.GroupId)
+			}
+			tags := map[string]string{}
+			for _, t := range i.Tags {
+				tags[*t.Key] = *t.Value
+			}
+			ii.SecurityGroups = sgl
+			ii.Tags = tags
+			result = append(result, ii)
+		}
+	}
 	return result, nil
 }
