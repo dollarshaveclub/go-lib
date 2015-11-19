@@ -202,3 +202,11 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 	}
 	return result, nil
 }
+
+func (aws *RealAWSService) TerminateInstances(ids []string) error {
+	tii := ec2.TerminateInstancesInput{
+		InstanceIds: stringSlicetoStringPointerSlice(ids),
+	}
+	_, err := aws.ec2.TerminateInstances(&tii)
+	return err
+}
