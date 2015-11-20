@@ -17,6 +17,7 @@ type InstancesDefinition struct {
 	SecurityGroup string
 	Keypair       string
 	Type          string
+	GetPublicIP   bool
 	UserData      []byte
 	Count         int
 	RootSizeGB    int // Optional (default: 20)
@@ -68,9 +69,19 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 		KeyName:             &idef.Keypair,
 		InstanceType:        &idef.Type,
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{&bdm},
-		SecurityGroupIds:    []*string{&idef.SecurityGroup},
-		SubnetId:            &idef.Subnet,
 		UserData:            &ud,
+	}
+	if idef.GetPublicIP {
+		devindx := int64(0)
+		ri.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{&ec2.InstanceNetworkInterfaceSpecification{
+			AssociatePublicIpAddress: &True,
+			Groups:      []*string{&idef.SecurityGroup},
+			DeviceIndex: &devindx,
+			SubnetId:    &idef.Subnet,
+		}}
+	} else {
+		ri.SubnetId = &idef.Subnet
+		ri.SecurityGroupIds = []*string{&idef.SecurityGroup}
 	}
 	r, err := aws.ec2.RunInstances(&ri)
 	if err != nil {
@@ -185,9 +196,11 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 				Keypair:   *i.KeyName,
 				Type:      *i.InstanceType,
 				ID:        *i.InstanceId,
-				PublicIP:  *i.PublicIpAddress,
 				PrivateIP: *i.PrivateIpAddress,
 				Subnet:    *i.SubnetId,
+			}
+			if i.PublicIpAddress != nil {
+				ii.PublicIP = *i.PublicIpAddress
 			}
 			sgl := []string{}
 			for _, sg := range i.SecurityGroups {
