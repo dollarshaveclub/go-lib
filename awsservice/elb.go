@@ -23,7 +23,7 @@ type LoadBalancerDefinition struct {
 }
 
 type LBHealthCheck struct {
-	Protocol           string
+	Target             string
 	Interval           int64
 	Timeout            int64
 	HealthyThreshold   int64
@@ -136,7 +136,7 @@ func (aws *RealAWSService) SetHealthCheck(n string, hc *LBHealthCheck) error {
 		HealthCheck: &elb.HealthCheck{
 			HealthyThreshold:   &hc.HealthyThreshold,
 			Interval:           &hc.Interval,
-			Target:             &hc.Protocol,
+			Target:             &hc.Target,
 			Timeout:            &hc.Timeout,
 			UnhealthyThreshold: &hc.UnhealthyThreshold,
 		},
