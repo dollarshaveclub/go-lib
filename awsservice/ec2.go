@@ -126,7 +126,7 @@ func (aws *RealAWSService) FindInstancesByTag(n string, v string) ([]string, err
 	}
 	for _, rev := range r.Reservations {
 		for _, inst := range rev.Instances {
-			instances = append(instances, *(inst.InstanceId))
+			instances = append(instances, drefStringPtr(inst.InstanceId))
 		}
 	}
 	return instances, nil
@@ -166,15 +166,15 @@ func (aws *RealAWSService) GetSubnetInfo(id string) (*SubnetInfo, error) {
 	if err != nil {
 		return result, err
 	}
-	result.AvailabilityZone = *res.Subnets[0].AvailabilityZone
-	result.AvailableIPAddresses = *res.Subnets[0].AvailableIpAddressCount
-	result.CIDR = *res.Subnets[0].CidrBlock
-	result.State = *res.Subnets[0].State
-	result.ID = *res.Subnets[0].SubnetId
-	result.VPC = *res.Subnets[0].VpcId
+	result.AvailabilityZone = drefStringPtr(res.Subnets[0].AvailabilityZone)
+	result.AvailableIPAddresses = drefInt64Ptr(res.Subnets[0].AvailableIpAddressCount)
+	result.CIDR = drefStringPtr(res.Subnets[0].CidrBlock)
+	result.State = drefStringPtr(res.Subnets[0].State)
+	result.ID = drefStringPtr(res.Subnets[0].SubnetId)
+	result.VPC = drefStringPtr(res.Subnets[0].VpcId)
 	tags := map[string]string{}
 	for _, t := range res.Subnets[0].Tags {
-		tags[*t.Key] = *t.Value
+		tags[drefStringPtr(t.Key)] = drefStringPtr(t.Value)
 	}
 	result.Tags = tags
 	return result, nil
@@ -192,23 +192,21 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 	for _, r := range res.Reservations {
 		for _, i := range r.Instances {
 			ii := InstanceInfo{
-				AMI:       *i.ImageId,
-				Keypair:   *i.KeyName,
-				Type:      *i.InstanceType,
-				ID:        *i.InstanceId,
-				PrivateIP: *i.PrivateIpAddress,
-				Subnet:    *i.SubnetId,
-			}
-			if i.PublicIpAddress != nil {
-				ii.PublicIP = *i.PublicIpAddress
+				AMI:       drefStringPtr(i.ImageId),
+				Keypair:   drefStringPtr(i.KeyName),
+				Type:      drefStringPtr(i.InstanceType),
+				ID:        drefStringPtr(i.InstanceId),
+				PrivateIP: drefStringPtr(i.PrivateIpAddress),
+				Subnet:    drefStringPtr(i.SubnetId),
+				PublicIP:  drefStringPtr(i.PublicIpAddress),
 			}
 			sgl := []string{}
 			for _, sg := range i.SecurityGroups {
-				sgl = append(sgl, *sg.GroupId)
+				sgl = append(sgl, drefStringPtr(sg.GroupId))
 			}
 			tags := map[string]string{}
 			for _, t := range i.Tags {
-				tags[*t.Key] = *t.Value
+				tags[drefStringPtr(t.Key)] = drefStringPtr(t.Value)
 			}
 			ii.SecurityGroups = sgl
 			ii.Tags = tags

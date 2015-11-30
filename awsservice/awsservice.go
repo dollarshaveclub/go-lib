@@ -16,6 +16,8 @@ type AWSLoadBalancerService interface {
 	DeleteLoadBalancer(string) error
 	RegisterInstances(string, []string) error
 	DeregisterInstances(string, []string) error
+	GetLoadBalancerInfo(string) (*LoadBalancerInfo, error)
+	GetInstanceHealth(string) (*LBInstanceHealthInfo, error)
 }
 
 type AWSRoute53Service interface {
@@ -98,6 +100,28 @@ func stringSlicetoStringPointerSlice(s []string) []*string {
 		o = append(o, &nstr)
 	}
 	return o
+}
+
+func stringPointerSlicetoStringSlice(s []*string) []string {
+	o := []string{}
+	for _, ptr := range s {
+		o = append(o, drefStringPtr(ptr))
+	}
+	return o
+}
+
+func drefStringPtr(ptr *string) string {
+	if ptr == nil {
+		return ""
+	}
+	return *ptr
+}
+
+func drefInt64Ptr(ptr *int64) int64 {
+	if ptr == nil {
+		return int64(0)
+	}
+	return *ptr
 }
 
 func instanceIDSlice(ids []string) []*elb.Instance {
