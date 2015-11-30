@@ -18,6 +18,7 @@ type AWSLoadBalancerService interface {
 	DeregisterInstances(string, []string) error
 	GetLoadBalancerInfo(string) (*LoadBalancerInfo, error)
 	GetInstanceHealth(string) (*LBInstanceHealthInfo, error)
+	SetHealthCheck(string, *LBHealthCheck) error
 }
 
 type AWSRoute53Service interface {

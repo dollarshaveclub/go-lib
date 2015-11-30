@@ -22,6 +22,14 @@ type LoadBalancerDefinition struct {
 	Subnets        []string
 }
 
+type LBHealthCheck struct {
+	Protocol           string
+	Interval           int64
+	Timeout            int64
+	HealthyThreshold   int64
+	UnhealthyThreshold int64
+}
+
 type LBInstanceHealth struct {
 	ID          string
 	Description string
@@ -120,6 +128,21 @@ func (aws *RealAWSService) GetInstanceHealth(n string) (*LBInstanceHealthInfo, e
 	}
 	result.Instances = instances
 	return result, nil
+}
+
+func (aws *RealAWSService) SetHealthCheck(n string, hc *LBHealthCheck) error {
+	chk := &elb.ConfigureHealthCheckInput{
+		LoadBalancerName: &n,
+		HealthCheck: &elb.HealthCheck{
+			HealthyThreshold:   &hc.HealthyThreshold,
+			Interval:           &hc.Interval,
+			Target:             &hc.Protocol,
+			Timeout:            &hc.Timeout,
+			UnhealthyThreshold: &hc.UnhealthyThreshold,
+		},
+	}
+	_, err := aws.elbc.ConfigureHealthCheck(chk)
+	return err
 }
 
 func (aws *RealAWSService) DeleteLoadBalancer(n string) error {
