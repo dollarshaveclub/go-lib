@@ -83,3 +83,11 @@ func (c *VaultClient) GetValue(path string) (interface{}, error) {
 	}
 	return s.Data["value"], nil
 }
+
+// WriteValue writes value=data at path
+func (c *VaultClient) WriteValue(path string, data []byte) error {
+	c.client.SetToken(c.token)
+	lc := c.client.Logical()
+	_, err := lc.Write(path, map[string]interface{}{"value": data})
+	return err
+}
