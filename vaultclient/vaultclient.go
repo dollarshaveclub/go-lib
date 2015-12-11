@@ -9,9 +9,7 @@ import (
 )
 
 type VaultConfig struct {
-	Server     string // protocol, hostname and port (https://vault.foo.com:8200)
-	AppID      string // AppID string to be used for authentication
-	UserIDPath string // Path to file containing UserID for authentication
+	Server string // protocol, hostname and port (https://vault.foo.com:8200)
 }
 
 type VaultClient struct {
@@ -29,9 +27,14 @@ func NewClient(config *VaultConfig) (*VaultClient, error) {
 	return &vc, err
 }
 
+// TokenAuth sets the client token but doesn't check validity
+func (c *VaultClient) TokenAuth(token string) {
+	c.token = token
+}
+
 // AppIDAuth attempts to perform app-id authorization.
-func (c *VaultClient) AppIDAuth() error {
-	f, err := os.Open(c.config.UserIDPath)
+func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
+	f, err := os.Open(useridpath)
 	if err != nil {
 		return fmt.Errorf("Error opening Vault User ID file: %v", err)
 	}
@@ -50,7 +53,7 @@ func (c *VaultClient) AppIDAuth() error {
 		AppID  string `json:"app_id"`
 		UserID string `json:"user_id"`
 	}{
-		AppID:  c.config.AppID,
+		AppID:  appid,
 		UserID: string(userid),
 	}
 	req.SetJSONBody(bodystruct)
