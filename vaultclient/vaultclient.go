@@ -81,6 +81,9 @@ func (c *VaultClient) GetValue(path string) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error reading secret from Vault: %v: %v", path, err)
 	}
+	if _, ok := s.Data["value"]; !ok {
+		return nil, fmt.Errorf("Secret missing 'value' key")
+	}
 	return s.Data["value"], nil
 }
 
