@@ -23,7 +23,7 @@ type UDT struct {
 
 // CreateTable creates a table
 func CreateTable(c *gocql.ClusterConfig, t CTable) error {
-	qs := fmt.Sprintf("CREATE TABLE IF NOT EXISTS%v ( %v );", t.Name, strings.Join(t.Columns, ", "))
+	qs := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %v ( %v );", t.Name, strings.Join(t.Columns, ", "))
 	s, err := c.CreateSession()
 	if err != nil {
 		return err
