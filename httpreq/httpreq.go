@@ -12,17 +12,18 @@ type HTTPService interface {
 }
 
 type HTTPResponse struct {
-	Body string
-	Resp *http.Response
+	Body      string
+	BodyBytes []byte
+	Resp      *http.Response
 }
 
-func getRespBody(resp *http.Response) (string, error) {
+func getRespBody(resp *http.Response) (string, []byte, error) {
 	defer resp.Body.Close()
 	bb, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", []byte{}, err
 	}
-	return string(bb), nil
+	return string(bb), bb, nil
 }
 
 // HTTPRequest executes a given HTTP API request, returning response body
@@ -40,11 +41,12 @@ func HTTPRequest(url string, method string, body io.Reader, headers map[string]s
 	if err != nil {
 		return hresp, err
 	}
-	bs, err := getRespBody(resp)
+	bs, bb, err := getRespBody(resp)
 	if err != nil {
 		return hresp, err
 	}
 	hresp.Body = bs
+	hresp.BodyBytes = bb
 	hresp.Resp = resp
 	if resp.StatusCode > 399 && failOnError {
 		return hresp, fmt.Errorf("Server response indicates failure: %v %v", resp.StatusCode, bs)
