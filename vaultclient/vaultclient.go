@@ -36,17 +36,17 @@ func (c *VaultClient) TokenAuth(token string) {
 func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
 	f, err := os.Open(useridpath)
 	if err != nil {
-		return fmt.Errorf("Error opening Vault User ID file: %v", err)
+		return fmt.Errorf("error opening Vault User ID file: %v", err)
 	}
 	defer f.Close()
 	fi, err := f.Stat()
 	if err != nil {
-		return fmt.Errorf("Error getting stat info on Vault User ID file: %v", err)
+		return fmt.Errorf("error getting stat info on Vault User ID file: %v", err)
 	}
 	userid := make([]byte, fi.Size())
 	_, err = f.Read(userid)
 	if err != nil {
-		return fmt.Errorf("Error reading Vault User ID file: %v", err)
+		return fmt.Errorf("error reading Vault User ID file: %v", err)
 	}
 	req := c.client.NewRequest("POST", "/v1/auth/app-id/login")
 	bodystruct := struct {
@@ -59,13 +59,13 @@ func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
 	req.SetJSONBody(bodystruct)
 	resp, err := c.client.RawRequest(req)
 	if err != nil {
-		return fmt.Errorf("Error performing auth call to Vault: %v", err)
+		return fmt.Errorf("error performing auth call to Vault: %v", err)
 	}
 	var output interface{}
 	jd := json.NewDecoder(resp.Body)
 	err = jd.Decode(&output)
 	if err != nil {
-		return fmt.Errorf("Error unmarshaling Vault auth response: %v", err)
+		return fmt.Errorf("error unmarshaling Vault auth response: %v", err)
 	}
 	body := output.(map[string]interface{})
 	auth := body["auth"].(map[string]interface{})
@@ -79,13 +79,13 @@ func (c *VaultClient) GetValue(path string) (interface{}, error) {
 	lc := c.client.Logical()
 	s, err := lc.Read(path)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading secret from Vault: %v: %v", path, err)
+		return nil, fmt.Errorf("error reading secret from Vault: %v: %v", path, err)
 	}
 	if s == nil {
-		return nil, fmt.Errorf("Secret not found")
+		return nil, fmt.Errorf("secret not found")
 	}
 	if _, ok := s.Data["value"]; !ok {
-		return nil, fmt.Errorf("Secret missing 'value' key")
+		return nil, fmt.Errorf("secret missing 'value' key")
 	}
 	return s.Data["value"], nil
 }
