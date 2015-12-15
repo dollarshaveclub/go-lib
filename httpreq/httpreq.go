@@ -1,6 +1,7 @@
 package httpreq
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,6 +18,15 @@ type HTTPResponse struct {
 	Resp      *http.Response
 }
 
+type HTTPRequestConfig struct {
+	URL                   string
+	Method                string
+	Body                  io.Reader
+	Headers               map[string]string
+	FailOnError           bool
+	InsecureSkipTLSVerify bool
+}
+
 func getRespBody(resp *http.Response) (string, []byte, error) {
 	defer resp.Body.Close()
 	bb, err := ioutil.ReadAll(resp.Body)
@@ -28,15 +38,30 @@ func getRespBody(resp *http.Response) (string, []byte, error) {
 
 // HTTPRequest executes a given HTTP API request, returning response body
 func HTTPRequest(url string, method string, body io.Reader, headers map[string]string, failOnError bool) (*HTTPResponse, error) {
+	c := &HTTPRequestConfig{
+		URL:         url,
+		Method:      method,
+		Body:        body,
+		Headers:     headers,
+		FailOnError: failOnError,
+	}
+	return HTTPComplexRequest(c)
+}
+
+//HTTPComplexRequest allows more control over request options
+func HTTPComplexRequest(c *HTTPRequestConfig) (*HTTPResponse, error) {
 	hresp := &HTTPResponse{}
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(c.Method, c.URL, c.Body)
 	if err != nil {
 		return hresp, err
 	}
-	for k, v := range headers {
+	for k, v := range c.Headers {
 		req.Header.Add(k, v)
 	}
-	hc := http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: c.InsecureSkipTLSVerify},
+	}
+	hc := http.Client{Transport: tr}
 	resp, err := hc.Do(req)
 	if err != nil {
 		return hresp, err
@@ -48,7 +73,7 @@ func HTTPRequest(url string, method string, body io.Reader, headers map[string]s
 	hresp.Body = bs
 	hresp.BodyBytes = bb
 	hresp.Resp = resp
-	if resp.StatusCode > 399 && failOnError {
+	if resp.StatusCode > 399 && c.FailOnError {
 		return hresp, fmt.Errorf("Server response indicates failure: %v %v", resp.StatusCode, bs)
 	}
 	return hresp, nil
