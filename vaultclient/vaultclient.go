@@ -4,8 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/hashicorp/vault/api"
+)
+
+const (
+	appIDretries = 5
 )
 
 type VaultConfig struct {
@@ -48,7 +53,7 @@ func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
 	if err != nil {
 		return fmt.Errorf("error reading Vault User ID file: %v", err)
 	}
-	req := c.client.NewRequest("POST", "/v1/auth/app-id/login")
+
 	bodystruct := struct {
 		AppID  string `json:"app_id"`
 		UserID string `json:"user_id"`
@@ -56,11 +61,24 @@ func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
 		AppID:  appid,
 		UserID: string(userid),
 	}
-	req.SetJSONBody(bodystruct)
-	resp, err := c.client.RawRequest(req)
-	if err != nil {
-		return fmt.Errorf("error performing auth call to Vault: %v", err)
+
+	var resp *api.Response
+	for i := 0; i < appIDretries; i++ {
+		req := c.client.NewRequest("POST", "/v1/auth/app-id/login")
+		jerr := req.SetJSONBody(bodystruct)
+		if jerr != nil {
+			return fmt.Errorf("error setting auth JSON body: %v", err)
+		}
+		resp, err = c.client.RawRequest(req)
+		if err == nil {
+			break
+		}
+		time.Sleep(2 * time.Second)
 	}
+	if err != nil {
+		return fmt.Errorf("error performing auth call to Vault (retries exceeded): %v", err)
+	}
+
 	var output interface{}
 	jd := json.NewDecoder(resp.Body)
 	err = jd.Decode(&output)

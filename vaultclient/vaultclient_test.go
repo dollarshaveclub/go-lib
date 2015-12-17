@@ -11,9 +11,7 @@ const (
 )
 
 var tconfig = VaultConfig{
-	Server:     os.Getenv("VAULT_ADDR"),
-	AppID:      os.Getenv("VAULT_APP_ID"),
-	UserIDPath: os.Getenv("VAULT_USER_ID_PATH"),
+	Server: os.Getenv("VAULT_ADDR"),
 }
 
 func TestVaultAppIDAuth(t *testing.T) {
@@ -21,7 +19,7 @@ func TestVaultAppIDAuth(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Error creating client: %v", err)
 	}
-	err = vc.AppIDAuth()
+	err = vc.AppIDAuth(os.Getenv("VAULT_APP_ID"), os.Getenv("VAULT_USER_ID_PATH"))
 	if err != nil {
 		log.Fatalf("Error authenticating: %v", err)
 	}
@@ -32,7 +30,7 @@ func TestVaultGetValue(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Error creating client: %v", err)
 	}
-	err = vc.AppIDAuth()
+	err = vc.AppIDAuth(os.Getenv("VAULT_APP_ID"), os.Getenv("VAULT_USER_ID_PATH"))
 	if err != nil {
 		log.Fatalf("Error authenticating: %v", err)
 	}
