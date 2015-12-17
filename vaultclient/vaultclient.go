@@ -3,6 +3,7 @@ package vaultclient
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 )
 
 const (
-	appIDretries = 5
+	appIDretries = 10
 )
 
 type VaultConfig struct {
@@ -73,7 +74,8 @@ func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
 		if err == nil {
 			break
 		}
-		time.Sleep(2 * time.Second)
+		log.Printf("App-ID auth failed, retrying (%v/%v)", i+1, appIDretries)
+		time.Sleep(3 * time.Second)
 	}
 	if err != nil {
 		return fmt.Errorf("error performing auth call to Vault (retries exceeded): %v", err)
