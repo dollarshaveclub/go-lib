@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	appIDretries = 10
+	authretries       = 10
+	retrydelayseconds = 3
 )
 
 type VaultConfig struct {
@@ -34,8 +35,23 @@ func NewClient(config *VaultConfig) (*VaultClient, error) {
 }
 
 // TokenAuth sets the client token but doesn't check validity
-func (c *VaultClient) TokenAuth(token string) {
+func (c *VaultClient) TokenAuth(token string) error {
 	c.token = token
+	c.client.SetToken(token)
+	ta := c.client.Auth().Token()
+	var err error
+	for i := 0; i < authretries; i++ {
+		_, err = ta.LookupSelf()
+		if err == nil {
+			break
+		}
+		log.Printf("Token auth failed: %v, retrying (%v/%v)", err, i+1, authretries)
+		time.Sleep(retrydelayseconds * time.Second)
+	}
+	if err != nil {
+		return fmt.Errorf("error performing auth call to Vault (retries exceeded): %v", err)
+	}
+	return nil
 }
 
 // AppIDAuth attempts to perform app-id authorization.
@@ -64,7 +80,7 @@ func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
 	}
 
 	var resp *api.Response
-	for i := 0; i < appIDretries; i++ {
+	for i := 0; i < authretries; i++ {
 		req := c.client.NewRequest("POST", "/v1/auth/app-id/login")
 		jerr := req.SetJSONBody(bodystruct)
 		if jerr != nil {
@@ -74,8 +90,8 @@ func (c *VaultClient) AppIDAuth(appid string, useridpath string) error {
 		if err == nil {
 			break
 		}
-		log.Printf("App-ID auth failed, retrying (%v/%v)", i+1, appIDretries)
-		time.Sleep(3 * time.Second)
+		log.Printf("App-ID auth failed: %v, retrying (%v/%v)", err, i+1, authretries)
+		time.Sleep(retrydelayseconds * time.Second)
 	}
 	if err != nil {
 		return fmt.Errorf("error performing auth call to Vault (retries exceeded): %v", err)

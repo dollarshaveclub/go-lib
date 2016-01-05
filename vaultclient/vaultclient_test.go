@@ -25,6 +25,17 @@ func TestVaultAppIDAuth(t *testing.T) {
 	}
 }
 
+func TestVaultTokenAuth(t *testing.T) {
+	vc, err := NewClient(&tconfig)
+	if err != nil {
+		log.Fatalf("Error creating client: %v", err)
+	}
+	err = vc.TokenAuth(os.Getenv("VAULT_TOKEN"))
+	if err != nil {
+		log.Fatalf("Error authenticating: %v", err)
+	}
+}
+
 func TestVaultGetValue(t *testing.T) {
 	vc, err := NewClient(&tconfig)
 	if err != nil {
