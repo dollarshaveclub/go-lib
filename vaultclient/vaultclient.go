@@ -1,6 +1,7 @@
 package vaultclient
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -124,6 +125,33 @@ func (c *VaultClient) GetValue(path string) (interface{}, error) {
 		return nil, fmt.Errorf("secret missing 'value' key")
 	}
 	return s.Data["value"], nil
+}
+
+// GetStringValue retrieves a value expected to be a string
+func (c *VaultClient) GetStringValue(path string) (string, error) {
+	val, err := c.GetValue(path)
+	if err != nil {
+		return "", err
+	}
+	switch val := val.(type) {
+	case string:
+		return val, nil
+	default:
+		return "", fmt.Errorf("unexpected type for %v value: %T", path, val)
+	}
+}
+
+// GetBase64Value retrieves and decodes a value expected to be base64-encoded binary
+func (c *VaultClient) GetBase64Value(path string) ([]byte, error) {
+	val, err := c.GetStringValue(path)
+	if err != nil {
+		return []byte{}, err
+	}
+	decoded, err := base64.StdEncoding.DecodeString(val)
+	if err != nil {
+		return []byte{}, fmt.Errorf("vault path: %v: error decoding base64 value: %v", path, err)
+	}
+	return decoded, nil
 }
 
 // WriteValue writes value=data at path
