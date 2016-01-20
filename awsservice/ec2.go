@@ -32,6 +32,7 @@ type InstanceInfo struct {
 	PublicIP       string
 	Subnet         string
 	SecurityGroups []string
+	State          string
 	Tags           map[string]string
 }
 
@@ -199,6 +200,7 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 				PrivateIP: drefStringPtr(i.PrivateIpAddress),
 				Subnet:    drefStringPtr(i.SubnetId),
 				PublicIP:  drefStringPtr(i.PublicIpAddress),
+				State:     drefStringPtr(i.State.Name),
 			}
 			sgl := []string{}
 			for _, sg := range i.SecurityGroups {
