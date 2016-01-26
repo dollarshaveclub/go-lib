@@ -195,16 +195,18 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 	for _, r := range res.Reservations {
 		for _, i := range r.Instances {
 			ii := InstanceInfo{
-				AMI:                drefStringPtr(i.ImageId),
-				Keypair:            drefStringPtr(i.KeyName),
-				Type:               drefStringPtr(i.InstanceType),
-				ID:                 drefStringPtr(i.InstanceId),
-				PrivateIP:          drefStringPtr(i.PrivateIpAddress),
-				Subnet:             drefStringPtr(i.SubnetId),
-				PublicIP:           drefStringPtr(i.PublicIpAddress),
-				State:              drefStringPtr(i.State.Name),
-				StateReasonCode:    drefStringPtr(i.StateReason.Code),
-				StateReasonMessage: drefStringPtr(i.StateReason.Message),
+				AMI:       drefStringPtr(i.ImageId),
+				Keypair:   drefStringPtr(i.KeyName),
+				Type:      drefStringPtr(i.InstanceType),
+				ID:        drefStringPtr(i.InstanceId),
+				PrivateIP: drefStringPtr(i.PrivateIpAddress),
+				Subnet:    drefStringPtr(i.SubnetId),
+				PublicIP:  drefStringPtr(i.PublicIpAddress),
+				State:     drefStringPtr(i.State.Name),
+			}
+			if i.StateReason != nil {
+				ii.StateReasonCode = drefStringPtr(i.StateReason.Code)
+				ii.StateReasonMessage = drefStringPtr(i.StateReason.Message)
 			}
 			sgl := []string{}
 			for _, sg := range i.SecurityGroups {
