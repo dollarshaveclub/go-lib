@@ -24,16 +24,18 @@ type InstancesDefinition struct {
 }
 
 type InstanceInfo struct {
-	AMI            string
-	Keypair        string
-	Type           string
-	ID             string
-	PrivateIP      string
-	PublicIP       string
-	Subnet         string
-	SecurityGroups []string
-	State          string
-	Tags           map[string]string
+	AMI                string
+	Keypair            string
+	Type               string
+	ID                 string
+	PrivateIP          string
+	PublicIP           string
+	Subnet             string
+	SecurityGroups     []string
+	State              string
+	StateReasonCode    string
+	StateReasonMessage string
+	Tags               map[string]string
 }
 
 type SubnetInfo struct {
@@ -193,14 +195,16 @@ func (aws *RealAWSService) GetInstancesInfo(ids []string) ([]InstanceInfo, error
 	for _, r := range res.Reservations {
 		for _, i := range r.Instances {
 			ii := InstanceInfo{
-				AMI:       drefStringPtr(i.ImageId),
-				Keypair:   drefStringPtr(i.KeyName),
-				Type:      drefStringPtr(i.InstanceType),
-				ID:        drefStringPtr(i.InstanceId),
-				PrivateIP: drefStringPtr(i.PrivateIpAddress),
-				Subnet:    drefStringPtr(i.SubnetId),
-				PublicIP:  drefStringPtr(i.PublicIpAddress),
-				State:     drefStringPtr(i.State.Name),
+				AMI:                drefStringPtr(i.ImageId),
+				Keypair:            drefStringPtr(i.KeyName),
+				Type:               drefStringPtr(i.InstanceType),
+				ID:                 drefStringPtr(i.InstanceId),
+				PrivateIP:          drefStringPtr(i.PrivateIpAddress),
+				Subnet:             drefStringPtr(i.SubnetId),
+				PublicIP:           drefStringPtr(i.PublicIpAddress),
+				State:              drefStringPtr(i.State.Name),
+				StateReasonCode:    drefStringPtr(i.StateReason.Code),
+				StateReasonMessage: drefStringPtr(i.StateReason.Message),
 			}
 			sgl := []string{}
 			for _, sg := range i.SecurityGroups {
