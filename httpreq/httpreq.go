@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type HTTPService interface {
@@ -25,6 +26,7 @@ type HTTPRequestConfig struct {
 	Headers               map[string]string
 	FailOnError           bool
 	InsecureSkipTLSVerify bool
+	TimeoutSeconds        uint
 }
 
 func getRespBody(resp *http.Response) (string, []byte, error) {
@@ -39,11 +41,12 @@ func getRespBody(resp *http.Response) (string, []byte, error) {
 // HTTPRequest executes a given HTTP API request, returning response body
 func HTTPRequest(url string, method string, body io.Reader, headers map[string]string, failOnError bool) (*HTTPResponse, error) {
 	c := &HTTPRequestConfig{
-		URL:         url,
-		Method:      method,
-		Body:        body,
-		Headers:     headers,
-		FailOnError: failOnError,
+		URL:            url,
+		Method:         method,
+		Body:           body,
+		Headers:        headers,
+		FailOnError:    failOnError,
+		TimeoutSeconds: 30,
 	}
 	return HTTPComplexRequest(c)
 }
@@ -61,7 +64,10 @@ func HTTPComplexRequest(c *HTTPRequestConfig) (*HTTPResponse, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: c.InsecureSkipTLSVerify},
 	}
-	hc := http.Client{Transport: tr}
+	hc := http.Client{
+		Transport: tr,
+		Timeout:   time.Duration(c.TimeoutSeconds) * time.Second,
+	}
 	resp, err := hc.Do(req)
 	if err != nil {
 		return hresp, err
