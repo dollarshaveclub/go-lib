@@ -48,10 +48,35 @@ func CreateUDT(c *gocql.ClusterConfig, u UDT) error {
 
 // CreateRequiredTypes ensures all the types passed in are created if necessary
 func CreateRequiredTypes(c *gocql.ClusterConfig, rt []UDT) error {
+	rtn := []string{}
+	etn := []string{}
+	rtm := map[string]UDT{}
 	for _, u := range rt {
-		err := CreateUDT(c, u)
-		if err != nil {
-			return err
+		rtn = append(rtn, u.Name)
+		rtm[u.Name] = u
+	}
+	rts := set.NewStringSet(rtn)
+	s, err := c.CreateSession()
+	if err != nil {
+		return err
+	}
+	q := `SELECT type_name FROM system.schema_usertypes WHERE keyspace_name = '%v';`
+	q = fmt.Sprintf(q, c.Keyspace)
+	iter := s.Query(q).Iter()
+	for n := ""; iter.Scan(&n); {
+		etn = append(etn, n)
+	}
+	if err := iter.Close(); err != nil {
+		return err
+	}
+	ets := set.NewStringSet(etn)
+	missing := rts.Difference(ets).Items()
+	if len(missing) > 0 {
+		for _, mt := range missing {
+			err := CreateUDT(c, rtm[mt])
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
