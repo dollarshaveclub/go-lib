@@ -19,7 +19,7 @@ func TestVaultAppIDAuth(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Error creating client: %v", err)
 	}
-	err = vc.AppIDAuth(os.Getenv("VAULT_APP_ID"), os.Getenv("VAULT_USER_ID_PATH"))
+	err = vc.AppIDAuth("testing-development", "178ae890-4ee1-422d-9877-ed1e784c6adf")
 	if err != nil {
 		log.Fatalf("Error authenticating: %v", err)
 	}
