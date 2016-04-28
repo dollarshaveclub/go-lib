@@ -59,7 +59,7 @@ func encodeUserData(ud []byte) (string, error) {
 	if _, err := w.Write(ud); err != nil {
 		return "", err
 	}
-	if err := w.Flush(); err != nil {
+	if err := w.Close(); err != nil {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
