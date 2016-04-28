@@ -1,6 +1,8 @@
 package awsservice
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"fmt"
 
@@ -48,12 +50,30 @@ type SubnetInfo struct {
 	VPC                  string
 }
 
+func encodeUserData(ud []byte) (string, error) {
+	var buf bytes.Buffer
+	w, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return "", err
+	}
+	if _, err := w.Write(ud); err != nil {
+		return "", err
+	}
+	if err := w.Flush(); err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
+}
+
 func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, error) {
 	count := int64(idef.Count)
 	rs := int64(20)
 	vt := "gp2"
 	rdn := "/dev/xvda"
-	ud := base64.StdEncoding.EncodeToString(idef.UserData)
+	ud, err := encodeUserData(idef.UserData)
+	if err != nil {
+		return []string{}, err
+	}
 	if idef.RootSizeGB != 0 {
 		rs = int64(idef.RootSizeGB)
 	}
