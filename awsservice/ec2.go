@@ -5,13 +5,37 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+//go:generate stringer -type=EBSVolumeType
+
 // AWS SDK pointer-itis
 var True = true
 var False = false
+
+// EBSVolumeType represents the different types of EBS volumes available
+type EBSVolumeType int
+
+const (
+	Gp2 EBSVolumeType = iota
+	Io1
+	Sc1
+	St1
+	Standard
+)
+
+type BlockDeviceDefinition struct {
+	Name                string
+	DeleteOnTermination bool
+	Encrypted           bool
+	Iops                int64
+	SnapshotID          string
+	Size                int64
+	Type                EBSVolumeType
+}
 
 type InstancesDefinition struct {
 	AMI           string
@@ -23,6 +47,7 @@ type InstancesDefinition struct {
 	UserData      []byte
 	Count         int
 	RootSizeGB    int // Optional (default: 20)
+	BlockDevices  []BlockDeviceDefinition
 }
 
 type InstanceInfo struct {
@@ -77,7 +102,7 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 	if idef.RootSizeGB != 0 {
 		rs = int64(idef.RootSizeGB)
 	}
-	bdm := ec2.BlockDeviceMapping{
+	root := ec2.BlockDeviceMapping{
 		DeviceName: &rdn,
 		Ebs: &ec2.EbsBlockDevice{
 			DeleteOnTermination: &True,
@@ -85,13 +110,29 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 			VolumeType:          &vt,
 		},
 	}
+	bdm := []*ec2.BlockDeviceMapping{&root}
+	for _, bd := range idef.BlockDevices {
+		vt := strings.ToLower(bd.Type.String())
+		nbd := &ec2.BlockDeviceMapping{
+			DeviceName: &bd.Name,
+			Ebs: &ec2.EbsBlockDevice{
+				DeleteOnTermination: &bd.DeleteOnTermination,
+				Encrypted:           &bd.Encrypted,
+				Iops:                &bd.Iops,
+				SnapshotId:          &bd.SnapshotID,
+				VolumeSize:          &bd.Size,
+				VolumeType:          &vt,
+			},
+		}
+		bdm = append(bdm, nbd)
+	}
 	ri := ec2.RunInstancesInput{
 		ImageId:             &idef.AMI,
 		MinCount:            &count,
 		MaxCount:            &count,
 		KeyName:             &idef.Keypair,
 		InstanceType:        &idef.Type,
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{&bdm},
+		BlockDeviceMappings: bdm,
 		UserData:            &ud,
 	}
 	if idef.GetPublicIP {
