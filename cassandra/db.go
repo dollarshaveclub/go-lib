@@ -1,9 +1,6 @@
 package cassandra
 
-import (
-	"github.com/gocql/gocql"
-	consul "github.com/hashicorp/consul/api"
-)
+import "github.com/gocql/gocql"
 
 // GetTables returns all tables in configured keyspace
 func GetTables(c *gocql.ClusterConfig) ([]string, error) {
@@ -35,26 +32,4 @@ func GetKeyspaces(c *gocql.ClusterConfig) ([]string, error) {
 		kss = append(kss, kn)
 	}
 	return kss, q.Close()
-}
-
-// GetNodesFromConsul queries the local Consul agent for the "cassandra" service,
-// returning the healthy nodes in ascending order of network distance/latency
-func GetNodesFromConsul() ([]string, error) {
-	nodes := []string{}
-	c, err := consul.NewClient(consul.DefaultConfig())
-	if err != nil {
-		return nodes, err
-	}
-	h := c.Health()
-	opts := &consul.QueryOptions{
-		Near: "_agent",
-	}
-	se, _, err := h.Service("cassandra", "", true, opts)
-	if err != nil {
-		return nodes, err
-	}
-	for _, s := range se {
-		nodes = append(nodes, s.Node.Address)
-	}
-	return nodes, nil
 }
