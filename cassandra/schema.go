@@ -141,6 +141,38 @@ func CreateKeyspace(c *gocql.ClusterConfig, ks string, rs string, rf int) error 
 	return nil
 }
 
+// CreateKeyspaceWithNetworkTopologyStrategy creates a keyspace if necesary with NetworkTopologyStrategy
+// ks -> keyspace name
+// rfmap -> map of datacenter name to replication factor for that DC
+func CreateKeyspaceWithNetworkTopologyStrategy(c *gocql.ClusterConfig, ks string, rfmap map[string]uint) error {
+	kis, err := GetKeyspaces(c)
+	if err != nil {
+		return err
+	}
+	kss := set.NewStringSet(kis)
+	if !kss.Contains(ks) {
+		log.Printf("Creating keyspace: %v\n", ks)
+		c.Keyspace = ""
+		s, err := c.CreateSession()
+		if err != nil {
+			return err
+		}
+		defer s.Close()
+		q := fmt.Sprintf("CREATE KEYSPACE IF NOT EXISTS %v WITH REPLICATION = {'class': '%v', ", ks, "NetworkTopologyStrategy")
+		rfsl := []string{}
+		for dc, rf := range rfmap {
+			rfsl = append(rfsl, fmt.Sprintf("'%v' : %v", dc, rf))
+		}
+		q = fmt.Sprintf("%v%v};", q, strings.Join(rfsl, ", "))
+		err = s.Query(q).Exec()
+		if err != nil {
+			return err
+		}
+	}
+	c.Keyspace = ks
+	return nil
+}
+
 // DropKeyspace deletes a keyspace and all data associated with it
 func DropKeyspace(c *gocql.ClusterConfig, ks string) error {
 	c.Keyspace = ""
