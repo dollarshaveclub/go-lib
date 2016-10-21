@@ -47,6 +47,7 @@ type InstancesDefinition struct {
 	UserData      []byte
 	Count         int
 	RootSizeGB    int // Optional (default: 20)
+	EncryptedRoot bool
 	BlockDevices  []BlockDeviceDefinition
 }
 
@@ -108,6 +109,7 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 			DeleteOnTermination: &True,
 			VolumeSize:          &rs,
 			VolumeType:          &vt,
+			Encrypted:           &idef.EncryptedRoot,
 		},
 	}
 	bdm := []*ec2.BlockDeviceMapping{&root}
