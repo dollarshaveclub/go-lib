@@ -109,8 +109,10 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 			DeleteOnTermination: &True,
 			VolumeSize:          &rs,
 			VolumeType:          &vt,
-			Encrypted:           &idef.EncryptedRoot,
 		},
+	}
+	if idef.EncryptedRoot {
+		root.Ebs.Encrypted = &idef.EncryptedRoot // leave nil otherwise
 	}
 	bdm := []*ec2.BlockDeviceMapping{&root}
 	for _, bd := range idef.BlockDevices {
