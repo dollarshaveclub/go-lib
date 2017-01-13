@@ -44,6 +44,7 @@ type InstancesDefinition struct {
 	Keypair       string
 	Type          string
 	GetPublicIP   bool
+	PrivateIP     string // Optional. Must be a valid unused IP within Subnet
 	UserData      []byte
 	Count         int
 	RootSizeGB    int // Optional (default: 20)
@@ -138,6 +139,9 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 		InstanceType:        &idef.Type,
 		BlockDeviceMappings: bdm,
 		UserData:            &ud,
+	}
+	if idef.PrivateIP != "" {
+		ri.PrivateIpAddress = &idef.PrivateIP
 	}
 	if idef.GetPublicIP {
 		devindx := int64(0)
