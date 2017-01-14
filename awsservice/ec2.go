@@ -44,7 +44,7 @@ type InstancesDefinition struct {
 	Keypair       string
 	Type          string
 	GetPublicIP   bool
-	PrivateIP     string // Optional. Must be a valid unused IP within Subnet
+	PrivateIPs    []string // Optional. Must be valid unused IPs within Subnet with length matching Count
 	UserData      []byte
 	Count         int
 	RootSizeGB    int // Optional (default: 20)
@@ -131,39 +131,57 @@ func (aws *RealAWSService) RunInstances(idef *InstancesDefinition) ([]string, er
 		}
 		bdm = append(bdm, nbd)
 	}
-	ri := ec2.RunInstancesInput{
-		ImageId:             &idef.AMI,
-		MinCount:            &count,
-		MaxCount:            &count,
-		KeyName:             &idef.Keypair,
-		InstanceType:        &idef.Type,
-		BlockDeviceMappings: bdm,
-		UserData:            &ud,
+	if len(idef.PrivateIPs) > 0 && len(idef.PrivateIPs) != idef.Count {
+		return []string{}, fmt.Errorf("invalid private ip count: %v (expected: %v)", len(idef.PrivateIPs), idef.Count)
 	}
-	if idef.PrivateIP != "" {
-		ri.PrivateIpAddress = &idef.PrivateIP
+	run := func(ri ec2.RunInstancesInput) ([]string, error) {
+		if idef.GetPublicIP {
+			devindx := int64(0)
+			ri.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{&ec2.InstanceNetworkInterfaceSpecification{
+				AssociatePublicIpAddress: &True,
+				Groups:      []*string{&idef.SecurityGroup},
+				DeviceIndex: &devindx,
+				SubnetId:    &idef.Subnet,
+			}}
+		} else {
+			ri.SubnetId = &idef.Subnet
+			ri.SecurityGroupIds = []*string{&idef.SecurityGroup}
+		}
+		r, err := aws.ec2.RunInstances(&ri)
+		if err != nil {
+			return []string{}, err
+		}
+		instances := []string{}
+		for _, inst := range r.Instances {
+			instances = append(instances, *(inst.InstanceId))
+		}
+		return instances, nil
 	}
-	if idef.GetPublicIP {
-		devindx := int64(0)
-		ri.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{&ec2.InstanceNetworkInterfaceSpecification{
-			AssociatePublicIpAddress: &True,
-			Groups:      []*string{&idef.SecurityGroup},
-			DeviceIndex: &devindx,
-			SubnetId:    &idef.Subnet,
-		}}
-	} else {
-		ri.SubnetId = &idef.Subnet
-		ri.SecurityGroupIds = []*string{&idef.SecurityGroup}
+	getri := func() ec2.RunInstancesInput {
+		return ec2.RunInstancesInput{
+			ImageId:             &idef.AMI,
+			MinCount:            &count,
+			MaxCount:            &count,
+			KeyName:             &idef.Keypair,
+			InstanceType:        &idef.Type,
+			BlockDeviceMappings: bdm,
+			UserData:            &ud,
+		}
 	}
-	r, err := aws.ec2.RunInstances(&ri)
-	if err != nil {
-		return []string{}, err
+	if len(idef.PrivateIPs) == 0 {
+		return run(getri())
 	}
-	instances := []string{}
-	for _, inst := range r.Instances {
-		instances = append(instances, *(inst.InstanceId))
+	allinstances := []string{}
+	for _, pip := range idef.PrivateIPs {
+		ri := getri()
+		ri.PrivateIpAddress = &pip
+		insts, err := run(ri)
+		if err != nil {
+			return []string{}, err
+		}
+		allinstances = append(allinstances, insts...)
 	}
-	return instances, nil
+	return allinstances, nil
 }
 
 func (aws *RealAWSService) StartInstances(ids []string) error {
