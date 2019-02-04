@@ -27,6 +27,7 @@ type HTTPRequestConfig struct {
 	FailOnError           bool
 	InsecureSkipTLSVerify bool
 	TimeoutSeconds        uint
+	CheckRedirect         func(req *http.Request, via []*http.Request) error
 }
 
 func getRespBody(resp *http.Response) (string, []byte, error) {
@@ -65,8 +66,9 @@ func HTTPComplexRequest(c *HTTPRequestConfig) (*HTTPResponse, error) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: c.InsecureSkipTLSVerify},
 	}
 	hc := http.Client{
-		Transport: tr,
-		Timeout:   time.Duration(c.TimeoutSeconds) * time.Second,
+		Transport:     tr,
+		Timeout:       time.Duration(c.TimeoutSeconds) * time.Second,
+		CheckRedirect: c.CheckRedirect,
 	}
 	resp, err := hc.Do(req)
 	if err != nil {
